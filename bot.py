@@ -12,6 +12,7 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 import database as db
+import os
 
 # =====================
 # SOZLAMALAR
@@ -20,8 +21,6 @@ BOT_TOKEN = os.environ.get("BOT_TOKEN", "8937881795:AAEzekvk1lG3HUn8LOLXWB8IexRb
 MINI_APP_URL = os.environ.get("MINI_APP_URL", "https://shaha8676.github.io/vpn-app/vpn-app.html")
 ADMIN_ID = 366589255  # Sizning Telegram ID ingiz
 SUPPORT_USERNAME = "@Panda56_support"
-
-import os
 
 logging.basicConfig(level=logging.INFO)
 
