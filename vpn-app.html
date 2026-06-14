@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>UzVPN</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-deep: #0d0a1a;
+    --bg-card: #16112a;
+    --bg-card2: #1e1636;
+    --violet-primary: #7c3aed;
+    --violet-light: #a855f7;
+    --violet-glow: #c084fc;
+    --violet-soft: #2d1b69;
+    --accent-pink: #e879f9;
+    --text-primary: #f5f0ff;
+    --text-secondary: #9d8ec0;
+    --text-muted: #5b4e7a;
+    --success: #4ade80;
+    --border: rgba(124,58,237,0.25);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg-deep);
+    color: var(--text-primary);
+    font-family: 'Outfit', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+  }
+  body::before {
+    content: '';
+    position: fixed;
+    top: -50%; left: -50%;
+    width: 200%; height: 200%;
+    background:
+      radial-gradient(ellipse at 20% 20%, rgba(124,58,237,0.15) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 80%, rgba(168,85,247,0.1) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 50%, rgba(232,121,249,0.05) 0%, transparent 60%);
+    animation: bgPulse 8s ease-in-out infinite alternate;
+    pointer-events: none; z-index: 0;
+  }
+  @keyframes bgPulse {
+    0% { transform: scale(1) rotate(0deg); }
+    100% { transform: scale(1.1) rotate(5deg); }
+  }
+  .app {
+    position: relative; z-index: 1;
+    max-width: 430px; margin: 0 auto;
+    min-height: 100vh; display: flex; flex-direction: column;
+  }
+
+  /* LANGUAGE SCREEN */
+  .lang-screen {
+    position: fixed; inset: 0;
+    background: var(--bg-deep);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    z-index: 200; padding: 30px;
+    animation: pageIn 0.4s ease;
+  }
+  .lang-screen.hidden { display: none; }
+  .lang-logo {
+    width: 90px; height: 90px;
+    filter: drop-shadow(0 0 25px rgba(168,85,247,0.9));
+    margin-bottom: 20px;
+    animation: shieldFloat 4s ease-in-out infinite;
+  }
+  .lang-title {
+    font-size: 28px; font-weight: 700;
+    background: linear-gradient(135deg, var(--violet-glow), var(--accent-pink));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    margin-bottom: 6px;
+  }
+  .lang-subtitle {
+    font-size: 14px; color: var(--text-muted);
+    margin-bottom: 40px; text-align: center; line-height: 1.5;
+  }
+  .lang-question {
+    font-size: 16px; font-weight: 600;
+    color: var(--text-primary); margin-bottom: 20px; text-align: center;
+  }
+  .lang-btn {
+    width: 100%; max-width: 320px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 18px 24px;
+    color: var(--text-primary);
+    font-family: 'Outfit', sans-serif;
+    font-size: 16px; font-weight: 600;
+    cursor: pointer;
+    display: flex; align-items: center; gap: 14px;
+    margin-bottom: 12px;
+    transition: all 0.2s;
+  }
+  .lang-btn:active, .lang-btn:hover {
+    background: var(--violet-soft);
+    border-color: var(--violet-light);
+    box-shadow: 0 4px 20px rgba(124,58,237,0.3);
+  }
+  .lang-flag { font-size: 28px; }
+  .lang-btn-text { flex: 1; text-align: left; }
+  .lang-btn-name { font-size: 16px; font-weight: 600; }
+  .lang-btn-native { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+  /* Pages */
+  .page { display: none; flex-direction: column; min-height: 100vh; padding-bottom: 90px; }
+  .page.active { display: flex; animation: pageIn 0.3s ease; }
+  @keyframes pageIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Header */
+  .header {
+    padding: 20px 20px 10px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .header-title { font-size: 17px; font-weight: 600; color: var(--text-primary); letter-spacing: 0.3px; }
+  .header-sub { font-size: 11px; color: var(--text-muted); text-align: center; }
+  .header-center { text-align: center; flex: 1; }
+
+  /* HOME */
+  .shield-area {
+    flex: 1; display: flex; align-items: center;
+    justify-content: center; flex-direction: column;
+    padding: 10px 20px; position: relative;
+  }
+  .shield-rings {
+    position: relative; width: 200px; height: 200px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .ring {
+    position: absolute; border-radius: 50%;
+    border: 1px solid rgba(124,58,237,0.2);
+    animation: ringPulse 3s ease-in-out infinite;
+  }
+  .ring-1 { width: 200px; height: 200px; }
+  .ring-2 { width: 155px; height: 155px; animation-delay: 0.5s; border-color: rgba(124,58,237,0.35); }
+  .ring-3 { width: 110px; height: 110px; animation-delay: 1s; border-color: rgba(168,85,247,0.5); }
+  @keyframes ringPulse {
+    0%, 100% { opacity: 0.4; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.03); }
+  }
+  .shield-icon {
+    width: 72px; height: 72px; position: relative; z-index: 2;
+    filter: drop-shadow(0 0 20px rgba(168,85,247,0.8));
+    animation: shieldFloat 4s ease-in-out infinite;
+  }
+  @keyframes shieldFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+  }
+  .status-badge {
+    margin-top: 14px;
+    display: flex; align-items: center; gap: 6px;
+    background: rgba(74,222,128,0.1);
+    border: 1px solid rgba(74,222,128,0.3);
+    border-radius: 20px; padding: 5px 14px;
+    font-size: 13px; color: var(--success); font-weight: 500;
+  }
+  .status-dot {
+    width: 7px; height: 7px;
+    background: var(--success); border-radius: 50%;
+    animation: blink 2s ease-in-out infinite;
+  }
+  @keyframes blink {
+    0%, 100% { opacity: 1; } 50% { opacity: 0.3; }
+  }
+  .info-row {
+    display: flex; justify-content: space-between;
+    align-items: center; padding: 0 20px; margin-bottom: 14px;
+  }
+  .info-item {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 10px 12px;
+    text-align: center; flex: 1; margin: 0 4px;
+  }
+  .info-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 4px; }
+  .info-value { font-size: 13px; font-weight: 600; color: var(--violet-glow); font-family: 'Space Mono', monospace; }
+
+  /* PLANS */
+  .plans-title {
+    font-size: 11px; font-weight: 600; color: var(--violet-light);
+    text-transform: uppercase; letter-spacing: 1px;
+    padding: 0 20px; margin-bottom: 10px;
+  }
+  .plans-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 10px; padding: 0 20px; margin-bottom: 14px;
+  }
+  .plan-card {
+    background: var(--bg-card); border: 1.5px solid var(--border);
+    border-radius: 16px; padding: 14px 12px;
+    cursor: pointer; transition: all 0.2s; position: relative;
+    text-align: center;
+  }
+  .plan-card:active { transform: scale(0.97); }
+  .plan-card.popular {
+    border-color: var(--violet-light);
+    background: linear-gradient(135deg, rgba(124,58,237,0.15), rgba(168,85,247,0.1));
+  }
+  .plan-badge {
+    position: absolute; top: -8px; left: 50%; transform: translateX(-50%);
+    background: linear-gradient(135deg, var(--violet-primary), var(--accent-pink));
+    color: white; font-size: 9px; font-weight: 700;
+    padding: 2px 10px; border-radius: 10px;
+    text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap;
+  }
+  .plan-months { font-size: 22px; font-weight: 700; color: var(--text-primary); }
+  .plan-months-label { font-size: 11px; color: var(--text-muted); margin-bottom: 8px; }
+  .plan-price { font-size: 18px; font-weight: 700; color: var(--violet-glow); font-family: 'Space Mono', monospace; }
+  .plan-per-month { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+  .plan-discount {
+    display: inline-block; margin-top: 6px;
+    background: rgba(74,222,128,0.15); border: 1px solid rgba(74,222,128,0.3);
+    color: var(--success); font-size: 10px; font-weight: 600;
+    padding: 2px 8px; border-radius: 8px;
+  }
+
+  .btn-primary {
+    margin: 0 20px 12px;
+    background: linear-gradient(135deg, var(--violet-primary), var(--violet-light));
+    border: none; border-radius: 16px; padding: 16px;
+    color: white; font-family: 'Outfit', sans-serif;
+    font-size: 15px; font-weight: 600; cursor: pointer;
+    display: flex; align-items: center; justify-content: space-between;
+    transition: all 0.2s;
+    box-shadow: 0 4px 20px rgba(124,58,237,0.4);
+  }
+  .btn-primary:active { transform: scale(0.98); }
+  .btn-secondary {
+    margin: 0 20px 12px;
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 16px; padding: 16px;
+    color: var(--text-primary); font-family: 'Outfit', sans-serif;
+    font-size: 15px; font-weight: 500; cursor: pointer;
+    display: flex; align-items: center; justify-content: space-between;
+    transition: all 0.2s;
+  }
+  .btn-secondary:active { transform: scale(0.98); background: var(--bg-card2); }
+  .btn-icon { font-size: 18px; }
+  .btn-price { font-size: 13px; opacity: 0.85; }
+
+  /* LIST */
+  .page-content { padding: 0 20px; }
+  .section-title {
+    font-size: 11px; font-weight: 600; color: var(--violet-light);
+    text-transform: uppercase; letter-spacing: 1px; margin: 20px 0 8px;
+  }
+  .card-list {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 16px; overflow: hidden; margin-bottom: 4px;
+  }
+  .list-item {
+    display: flex; align-items: center; padding: 14px 16px;
+    cursor: pointer; transition: background 0.15s;
+    border-bottom: 1px solid rgba(124,58,237,0.1); gap: 14px;
+  }
+  .list-item:last-child { border-bottom: none; }
+  .list-item:active { background: var(--bg-card2); }
+  .list-icon {
+    width: 36px; height: 36px; background: var(--violet-soft);
+    border-radius: 10px; display: flex; align-items: center;
+    justify-content: center; font-size: 16px; flex-shrink: 0;
+  }
+  .list-text { flex: 1; }
+  .list-title { font-size: 14px; font-weight: 500; color: var(--text-primary); }
+  .list-sub { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+  .list-arrow { color: var(--text-muted); font-size: 14px; }
+
+  /* PROFILE */
+  .profile-card {
+    background: linear-gradient(135deg, var(--bg-card), var(--violet-soft));
+    border: 1px solid var(--border); border-radius: 18px;
+    padding: 16px; margin: 16px 20px 0;
+    display: flex; align-items: center; gap: 14px;
+  }
+  .avatar {
+    width: 52px; height: 52px;
+    background: linear-gradient(135deg, var(--violet-primary), var(--accent-pink));
+    border-radius: 14px; display: flex; align-items: center;
+    justify-content: center; font-size: 22px; flex-shrink: 0;
+  }
+  .profile-name { font-size: 16px; font-weight: 600; }
+  .profile-id { font-size: 12px; color: var(--text-muted); font-family: 'Space Mono', monospace; margin-top: 2px; }
+  .copy-btn {
+    margin-left: auto;
+    background: var(--violet-soft); border: 1px solid var(--border);
+    border-radius: 10px; padding: 8px 10px;
+    color: var(--violet-glow); cursor: pointer; font-size: 16px;
+  }
+  .referral-box {
+    margin: 12px 20px 0;
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 14px 16px;
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  }
+  .referral-link {
+    font-size: 12px; color: var(--violet-glow);
+    font-family: 'Space Mono', monospace;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1;
+  }
+  .referral-label { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+
+  /* SETUP */
+  .setup-area {
+    width: 100%; display: flex; flex-direction: column;
+    align-items: center; padding: 20px 20px 30px;
+    animation: pageIn 0.3s ease;
+  }
+  .setup-icon-area {
+    width: 140px; height: 140px; position: relative;
+    display: flex; align-items: center; justify-content: center; margin-bottom: 20px;
+  }
+  .setup-ring {
+    position: absolute; border-radius: 50%;
+    border: 1px dashed rgba(124,58,237,0.3);
+  }
+  .setup-ring-1 { width: 140px; height: 140px; animation: spin 20s linear infinite; }
+  .setup-ring-2 { width: 100px; height: 100px; animation: spin 15s linear infinite reverse; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .setup-emoji { font-size: 46px; position: relative; z-index: 2; }
+  .setup-title {
+    font-size: 21px; font-weight: 700; text-align: center; margin-bottom: 8px;
+    background: linear-gradient(135deg, var(--violet-glow), var(--accent-pink));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .setup-sub {
+    font-size: 13px; color: var(--text-muted);
+    text-align: center; line-height: 1.5; margin-bottom: 20px;
+  }
+  /* OS BUTTONS */
+  .os-btn {
+    width: 100%; background: var(--bg-card);
+    border: 1.5px solid var(--border); border-radius: 18px;
+    padding: 16px 18px; cursor: pointer;
+    display: flex; align-items: center; gap: 14px;
+    transition: all 0.2s; margin-bottom: 0;
+  }
+  .os-btn:active {
+    border-color: var(--violet-light);
+    background: rgba(124,58,237,0.12);
+  }
+  .os-icon { font-size: 30px; flex-shrink: 0; }
+  .os-text { flex: 1; text-align: left; }
+  .os-name { font-size: 16px; font-weight: 600; color: var(--text-primary); }
+  .os-sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+  .os-arrow { font-size: 20px; color: var(--text-muted); }
+  /* STEPS HEADER */
+  .steps-header {
+    width: 100%; display: flex;
+    align-items: center; justify-content: space-between; margin-bottom: 8px;
+  }
+  .back-btn {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 8px 14px;
+    color: var(--text-secondary); font-size: 14px;
+    font-family: 'Outfit', sans-serif; cursor: pointer; transition: all 0.2s;
+  }
+  .back-btn:active { background: var(--bg-card2); }
+  .step-dots { display: flex; gap: 6px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-muted); transition: all 0.3s; }
+  .dot.active { background: var(--violet-light); box-shadow: 0 0 8px rgba(168,85,247,0.6); }
+  /* APP PREVIEW */
+  .app-preview {
+    width: 100%; background: var(--bg-card);
+    border: 1px solid var(--border); border-radius: 16px;
+    padding: 14px 16px; display: flex; align-items: center; gap: 12px; margin-bottom: 10px;
+  }
+  .app-icon-box {
+    width: 52px; height: 52px; border-radius: 14px;
+    background: linear-gradient(135deg, #1a1040, var(--violet-soft));
+    border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .app-info { flex: 1; }
+  .app-name { font-size: 15px; font-weight: 600; color: var(--text-primary); }
+  .app-store { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  .download-btn {
+    background: linear-gradient(135deg, var(--violet-primary), var(--violet-light));
+    border: none; border-radius: 10px; padding: 8px 16px;
+    color: white; font-size: 13px; font-weight: 600;
+    font-family: 'Outfit', sans-serif; cursor: pointer; flex-shrink: 0;
+    box-shadow: 0 2px 10px rgba(124,58,237,0.4);
+  }
+  .download-btn:active { transform: scale(0.96); }
+  /* CONFIG BOX */
+  .config-box {
+    width: 100%; background: var(--bg-card);
+    border: 1.5px solid var(--violet-soft); border-radius: 16px;
+    padding: 14px 16px; display: flex; align-items: center; gap: 12px; margin-bottom: 4px;
+  }
+  .config-icon { font-size: 26px; flex-shrink: 0; }
+  .config-info { flex: 1; }
+  .config-name { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+  .config-size { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  /* SUCCESS */
+  .success-circle {
+    width: 140px; height: 140px; position: relative;
+    display: flex; align-items: center; justify-content: center; margin-bottom: 4px;
+  }
+  .success-ring1 {
+    position: absolute; width: 140px; height: 140px;
+    border-radius: 50%; border: 2px solid rgba(74,222,128,0.3);
+    animation: successPulse 2s ease-in-out infinite;
+  }
+  .success-ring2 {
+    position: absolute; width: 100px; height: 100px;
+    border-radius: 50%; border: 2px solid rgba(74,222,128,0.5);
+    animation: successPulse 2s ease-in-out infinite 0.3s;
+  }
+  @keyframes successPulse {
+    0%, 100% { opacity: 0.5; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.05); }
+  }
+
+  /* LANG SWITCHER */
+  .lang-switcher {
+    display: flex; gap: 8px; margin: 0 20px 16px;
+  }
+  .lang-pill {
+    flex: 1; padding: 8px;
+    background: var(--bg-card); border: 1.5px solid var(--border);
+    border-radius: 12px; color: var(--text-muted);
+    font-size: 13px; font-weight: 600; cursor: pointer;
+    transition: all 0.2s; text-align: center;
+  }
+  .lang-pill.active {
+    border-color: var(--violet-light); color: var(--violet-glow);
+    background: rgba(124,58,237,0.15);
+  }
+
+  /* BOTTOM NAV */
+  .bottom-nav {
+    position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+    width: 100%; max-width: 430px;
+    background: rgba(13,10,26,0.96);
+    backdrop-filter: blur(20px);
+    border-top: 1px solid var(--border);
+    display: flex; padding: 8px 0 18px; z-index: 100;
+  }
+  .nav-item {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; gap: 4px; cursor: pointer;
+    padding: 4px; transition: all 0.2s; border: none; background: none;
+  }
+  .nav-icon-wrap {
+    width: 42px; height: 42px; border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; transition: all 0.2s;
+  }
+  .nav-item.active .nav-icon-wrap {
+    background: linear-gradient(135deg, var(--violet-primary), var(--violet-light));
+    box-shadow: 0 4px 15px rgba(124,58,237,0.5);
+  }
+  .nav-label { font-size: 10px; color: var(--text-muted); font-weight: 500; }
+  .nav-item.active .nav-label { color: var(--violet-glow); }
+
+  /* Toast */
+  .toast {
+    position: fixed; top: 20px; left: 50%;
+    transform: translateX(-50%) translateY(-60px);
+    background: var(--bg-card2); border: 1px solid var(--border);
+    border-radius: 12px; padding: 10px 20px;
+    font-size: 13px; color: var(--violet-glow);
+    z-index: 999; transition: transform 0.3s ease; white-space: nowrap;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  ::-webkit-scrollbar { width: 0; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- LANGUAGE SELECTION SCREEN -->
+  <div class="lang-screen" id="langScreen">
+    <svg class="lang-logo" viewBox="0 0 80 90" fill="none">
+      <path d="M40 4L8 18V42C8 60 22 76 40 86C58 76 72 60 72 42V18L40 4Z" fill="url(#sg)"/>
+      <path d="M40 14L16 25V42C16 56 26 69 40 77C54 69 64 56 64 42V25L40 14Z" fill="url(#sg2)" opacity="0.6"/>
+      <path d="M28 44L36 52L54 34" stroke="white" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <defs>
+        <linearGradient id="sg" x1="8" y1="4" x2="72" y2="86" gradientUnits="userSpaceOnUse">
+          <stop stop-color="#9333ea"/><stop offset="1" stop-color="#c084fc"/>
+        </linearGradient>
+        <linearGradient id="sg2" x1="16" y1="14" x2="64" y2="77" gradientUnits="userSpaceOnUse">
+          <stop stop-color="#7c3aed"/><stop offset="1" stop-color="#e879f9"/>
+        </linearGradient>
+      </defs>
+    </svg>
+    <div class="lang-title">UzVPN</div>
+    <div class="lang-subtitle">Xavfsiz va tez internet<br>Безопасный и быстрый интернет</div>
+    <div class="lang-question" id="langQuestion">Tilni tanlang / Выберите язык</div>
+
+    <button class="lang-btn" onclick="setLang('uz')">
+      <span class="lang-flag">🇺🇿</span>
+      <div class="lang-btn-text">
+        <div class="lang-btn-name">O'zbek tili</div>
+        <div class="lang-btn-native">Davom etish uchun tanlang</div>
+      </div>
+      <span>›</span>
+    </button>
+    <button class="lang-btn" onclick="setLang('ru')">
+      <span class="lang-flag">🇷🇺</span>
+      <div class="lang-btn-text">
+        <div class="lang-btn-name">Русский язык</div>
+        <div class="lang-btn-native">Нажмите для продолжения</div>
+      </div>
+      <span>›</span>
+    </button>
+  </div>
+
+  <!-- HOME PAGE -->
+  <div class="page active" id="page-home">
+    <div class="lang-switcher">
+      <button class="lang-pill active" id="pill-uz" onclick="setLang('uz')">🇺🇿 O'zbek</button>
+      <button class="lang-pill" id="pill-ru" onclick="setLang('ru')">🇷🇺 Русский</button>
+    </div>
+
+    <div class="shield-area">
+      <div class="shield-rings">
+        <div class="ring ring-1"></div>
+        <div class="ring ring-2"></div>
+        <div class="ring ring-3"></div>
+        <svg class="shield-icon" viewBox="0 0 80 90" fill="none">
+          <path d="M40 4L8 18V42C8 60 22 76 40 86C58 76 72 60 72 42V18L40 4Z" fill="url(#sh1)" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+          <path d="M40 14L16 25V42C16 56 26 69 40 77C54 69 64 56 64 42V25L40 14Z" fill="url(#sh2)" opacity="0.6"/>
+          <path d="M28 44L36 52L54 34" stroke="white" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <defs>
+            <linearGradient id="sh1" x1="8" y1="4" x2="72" y2="86" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#9333ea"/><stop offset="1" stop-color="#c084fc"/>
+            </linearGradient>
+            <linearGradient id="sh2" x1="16" y1="14" x2="64" y2="77" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#7c3aed"/><stop offset="1" stop-color="#e879f9"/>
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+      <div class="status-badge">
+        <div class="status-dot"></div>
+        <span id="homeStatus">Online · 1.53 TB</span>
+      </div>
+    </div>
+
+    <div class="info-row">
+      <div class="info-item">
+        <div class="info-label" data-uz="Muddat" data-ru="Срок">Muddat</div>
+        <div class="info-value">30 Iyn</div>
+      </div>
+      <div class="info-item">
+        <div class="info-label" data-uz="Qurilma" data-ru="Устройство">Qurilma</div>
+        <div class="info-value">1 ta</div>
+      </div>
+      <div class="info-item">
+        <div class="info-label" data-uz="Server" data-ru="Сервер">Server</div>
+        <div class="info-value">RU-1</div>
+      </div>
+    </div>
+
+    <!-- PLANS -->
+    <div class="plans-title" id="plansTitle">Tarif rejalar</div>
+    <div class="plans-grid">
+      <div class="plan-card" onclick="buyPlan(1,100)">
+        <div class="plan-months">1</div>
+        <div class="plan-months-label" data-uz="oy" data-ru="месяц">oy</div>
+        <div class="plan-price">100 ₽</div>
+        <div class="plan-per-month" data-uz="oyiga" data-ru="в месяц">oyiga</div>
+      </div>
+      <div class="plan-card popular" onclick="buyPlan(3,270)">
+        <div class="plan-badge" data-uz="Mashhur" data-ru="Популярное">Mashhur</div>
+        <div class="plan-months">3</div>
+        <div class="plan-months-label" data-uz="oy" data-ru="месяца">oy</div>
+        <div class="plan-price">270 ₽</div>
+        <div class="plan-per-month" data-uz="oyiga 90 ₽" data-ru="90 ₽ в мес">oyiga 90 ₽</div>
+        <div class="plan-discount">-10%</div>
+      </div>
+      <div class="plan-card" onclick="buyPlan(6,480)">
+        <div class="plan-months">6</div>
+        <div class="plan-months-label" data-uz="oy" data-ru="месяцев">oy</div>
+        <div class="plan-price">480 ₽</div>
+        <div class="plan-per-month" data-uz="oyiga 80 ₽" data-ru="80 ₽ в мес">oyiga 80 ₽</div>
+        <div class="plan-discount">-20%</div>
+      </div>
+      <div class="plan-card" onclick="buyPlan(12,840)">
+        <div class="plan-months">12</div>
+        <div class="plan-months-label" data-uz="oy" data-ru="месяцев">oy</div>
+        <div class="plan-price">840 ₽</div>
+        <div class="plan-per-month" data-uz="oyiga 70 ₽" data-ru="70 ₽ в мес">oyiga 70 ₽</div>
+        <div class="plan-discount">-30%</div>
+      </div>
+    </div>
+
+    <button class="btn-secondary" onclick="goTo('setup')">
+      <span id="btnSetup">🔧 O'rnatish va sozlash</span>
+      <span class="btn-icon">›</span>
+    </button>
+  </div>
+
+  <!-- SETUP PAGE -->
+  <div class="page" id="page-setup">
+    <div class="header">
+      <div style="width:50px"></div>
+      <div class="header-center">
+        <div class="header-title">UzVPN</div>
+        <div class="header-sub" id="setupHeaderSub">mini-ilova</div>
+      </div>
+      <div style="width:50px"></div>
+    </div>
+
+    <!-- STEP 1: OS tanlash -->
+    <div id="setupStep1" class="setup-area">
+      <div class="setup-icon-area">
+        <div class="setup-ring setup-ring-1"></div>
+        <div class="setup-ring setup-ring-2"></div>
+        <div class="setup-emoji">📱</div>
+      </div>
+      <div class="setup-title" id="setupChooseTitle">Qurilmangizni tanlang</div>
+      <div class="setup-sub" id="setupChooseSub">Qaysi tizimda ishlaydi?</div>
+      <button class="os-btn" onclick="selectOS('ios')">
+        <span class="os-icon">🍎</span>
+        <div class="os-text">
+          <div class="os-name">iPhone / iPad</div>
+          <div class="os-sub" id="iosSubText">iOS uchun App Store</div>
+        </div>
+        <span class="os-arrow">›</span>
+      </button>
+      <button class="os-btn" onclick="selectOS('android')" style="margin-top:10px;">
+        <span class="os-icon">🤖</span>
+        <div class="os-text">
+          <div class="os-name">Android</div>
+          <div class="os-sub" id="androidSubText">Google Play Store</div>
+        </div>
+        <span class="os-arrow">›</span>
+      </button>
+    </div>
+
+    <!-- STEP 2: App yuklab olish -->
+    <div id="setupStep2" class="setup-area" style="display:none;">
+      <div class="steps-header">
+        <button class="back-btn" onclick="showSetupStep(1)">‹ <span id="backText">Orqaga</span></button>
+        <div class="step-dots">
+          <span class="dot active"></span><span class="dot"></span><span class="dot"></span>
+        </div>
+      </div>
+      <div class="setup-icon-area" style="margin-top:10px;">
+        <div class="setup-ring setup-ring-1"></div>
+        <div class="setup-ring setup-ring-2"></div>
+        <div class="setup-emoji" id="step2Emoji">⬇️</div>
+      </div>
+      <div class="setup-title" id="step2Title">1-qadam: Ilovani yuklab oling</div>
+      <div class="setup-sub" id="step2Sub">WireGuard ilovasini App Store dan yuklab oling</div>
+      <div class="app-preview" id="appPreview">
+        <div class="app-icon-box">
+          <div style="font-size:36px;">🛡️</div>
+        </div>
+        <div class="app-info">
+          <div class="app-name">WireGuard</div>
+          <div class="app-store" id="appStoreName">App Store</div>
+        </div>
+        <button class="download-btn" id="downloadBtn" onclick="openStore()">
+          <span id="downloadBtnText">Yuklab olish</span>
+        </button>
+      </div>
+      <button class="btn-primary" style="width:100%;justify-content:center;margin:10px 0 0;" onclick="showSetupStep(3)">
+        <span id="alreadyInstalled">Ilova o'rnatilgan, davom etish</span>
+        <span>›</span>
+      </button>
+    </div>
+
+    <!-- STEP 3: Ulash -->
+    <div id="setupStep3" class="setup-area" style="display:none;">
+      <div class="steps-header">
+        <button class="back-btn" onclick="showSetupStep(2)">‹ <span id="backText2">Orqaga</span></button>
+        <div class="step-dots">
+          <span class="dot active"></span><span class="dot active"></span><span class="dot"></span>
+        </div>
+      </div>
+      <div class="setup-icon-area" style="margin-top:10px;">
+        <div class="setup-ring setup-ring-1"></div>
+        <div class="setup-ring setup-ring-2"></div>
+        <div class="setup-emoji">🔗</div>
+      </div>
+      <div class="setup-title" id="step3Title">2-qadam: Profilni ulang</div>
+      <div class="setup-sub" id="step3Sub">Quyidagi tugmani bosing — ilova avtomatik ochiladi va akkauntingiz ulanadi</div>
+      <div class="config-box">
+        <div class="config-icon">📋</div>
+        <div class="config-info">
+          <div class="config-name" id="configName">VPN Profil — UzVPN</div>
+          <div class="config-size">WireGuard Config</div>
+        </div>
+      </div>
+      <button class="btn-primary" style="width:100%;justify-content:center;margin:12px 0 10px;" onclick="openVPNApp()">
+        <span id="btnOpenApp">🚀 Ilovada ochish va ulash</span>
+      </button>
+      <div class="setup-sub" id="step3Hint" style="font-size:12px;margin:0;">Tugmani bossangiz WireGuard ilovasi ochiladi</div>
+    </div>
+
+    <!-- STEP 4: Tayyor -->
+    <div id="setupStep4" class="setup-area" style="display:none;">
+      <div class="steps-header">
+        <div style="height:40px;"></div>
+        <div class="step-dots">
+          <span class="dot active"></span><span class="dot active"></span><span class="dot active"></span>
+        </div>
+      </div>
+      <div class="success-circle">
+        <div class="success-ring1"></div>
+        <div class="success-ring2"></div>
+        <div style="font-size:52px;position:relative;z-index:2;">✅</div>
+      </div>
+      <div class="setup-title" id="step4Title" style="margin-top:20px;">Muvaffaqiyatli ulandi!</div>
+      <div class="setup-sub" id="step4Sub">VPN faol. Xavfsiz internetdan bahramand bo'ling!</div>
+      <button class="btn-primary" style="width:100%;justify-content:center;margin:10px 0 0;" onclick="navigate('home')">
+        <span id="btnGoHome">🏠 Bosh sahifaga</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- PROFILE PAGE -->
+  <div class="page" id="page-profile">
+    <div class="header">
+      <div style="width:50px"></div>
+      <div class="header-center">
+        <div class="header-title" id="profileHeaderTitle">Profil</div>
+      </div>
+      <div style="width:50px"></div>
+    </div>
+    <div class="profile-card">
+      <div class="avatar">👤</div>
+      <div>
+        <div class="profile-name">Shaxsa</div>
+        <div class="profile-id">id: 366589255</div>
+      </div>
+      <button class="copy-btn" onclick="showToast(t('idCopied'))">⧉</button>
+    </div>
+    <div class="referral-box">
+      <div>
+        <div class="referral-link">https://uzvpn.app/s/xT9mN2Vw</div>
+        <div class="referral-label" id="refLabel">Sizning taklif havolangiz</div>
+      </div>
+      <button class="copy-btn" onclick="showToast(t('linkCopied'))">⧉</button>
+    </div>
+    <div class="page-content">
+      <div class="section-title" id="profileSection1">Profil sozlamalari</div>
+      <div class="card-list">
+        <div class="list-item" onclick="sendToBot({action:'my_sub'})">
+          <div class="list-icon">💳</div>
+          <div class="list-text">
+            <div class="list-title" id="pm1">To'lov usullari</div>
+            <div class="list-sub" id="pm1s">To'lov usullarini sozlash</div>
+          </div>
+          <div class="list-arrow">›</div>
+        </div>
+        <div class="list-item" onclick="showToast(t('history'))">
+          <div class="list-icon">📋</div>
+          <div class="list-text">
+            <div class="list-title" id="pm2">Operatsiyalar tarixi</div>
+            <div class="list-sub" id="pm2s">Tranzaksiyalar ro'yxati</div>
+          </div>
+          <div class="list-arrow">›</div>
+        </div>
+        <div class="list-item" onclick="sendToBot({action:'referral'})">
+          <div class="list-icon">🎁</div>
+          <div class="list-text">
+            <div class="list-title" id="pm3">Referal dastur</div>
+            <div class="list-sub" id="pm3s">Taklif uchun bonus oling</div>
+          </div>
+          <div class="list-arrow">›</div>
+        </div>
+        <div class="list-item" onclick="showToast(t('access'))">
+          <div class="list-icon">🛡️</div>
+          <div class="list-text">
+            <div class="list-title" id="pm4">Kirishni saqlash</div>
+            <div class="list-sub" id="pm4s">Telegram bloklansa ham ishlaydi</div>
+          </div>
+          <div class="list-arrow">›</div>
+        </div>
+      </div>
+      <div class="section-title" id="profileSection2">Yordam</div>
+      <div class="card-list">
+        <div class="list-item" onclick="goTo('setup')">
+          <div class="list-icon">📱</div>
+          <div class="list-text">
+            <div class="list-title" id="sp1">Boshqa qurilmaga o'rnatish</div>
+            <div class="list-sub" id="sp1s">O'rnatish bo'yicha ko'rsatma</div>
+          </div>
+          <div class="list-arrow">›</div>
+        </div>
+        <div class="list-item" onclick="sendToBot({action:'support'})">
+          <div class="list-icon">💬</div>
+          <div class="list-text">
+            <div class="list-title" id="sp2">Qo'llab-quvvatlash</div>
+            <div class="list-sub" id="sp2s">Onlayn muammolarni hal qilish</div>
+          </div>
+          <div class="list-arrow">›</div>
+        </div>
+        <div class="list-item" onclick="showToast(t('terms'))">
+          <div class="list-icon">📄</div>
+          <div class="list-text">
+            <div class="list-title" id="sp3">Foydalanuvchi shartnomasi</div>
+            <div class="list-sub" id="sp3s">Xizmat qoidalari</div>
+          </div>
+          <div class="list-arrow">›</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SUPPORT PAGE -->
+  <div class="page" id="page-support">
+    <div class="header">
+      <div style="width:50px"></div>
+      <div class="header-center">
+        <div class="header-title" id="supportHeaderTitle">Yordam</div>
+      </div>
+      <div style="width:50px"></div>
+    </div>
+    <div class="setup-area">
+      <div class="setup-icon-area">
+        <div class="setup-ring setup-ring-1"></div>
+        <div class="setup-ring setup-ring-2"></div>
+        <div class="setup-emoji">🎧</div>
+      </div>
+      <div class="setup-title" id="supportTitle">Yordam markazi</div>
+      <div class="setup-sub" id="supportSub">Texnik muammolar va savollar uchun bizning jamoamiz doim tayyor</div>
+      <button class="btn-primary" style="width:100%;justify-content:center;margin:0 0 12px;" id="btnOperator" onclick="sendToBot({action:'support'})">
+        💬 Operatorga yozish
+      </button>
+      <button class="btn-secondary" style="width:100%;justify-content:center;margin:0;" id="btnFaq" onclick="showToast(t('faq'))">
+        ❓ Ko'p so'raladigan savollar
+      </button>
+    </div>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <nav class="bottom-nav">
+    <button class="nav-item active" id="nav-home" onclick="navigate('home')">
+      <div class="nav-icon-wrap">🏠</div>
+      <span class="nav-label" id="navHome">Bosh</span>
+    </button>
+    <button class="nav-item" id="nav-setup" onclick="navigate('setup')">
+      <div class="nav-icon-wrap">⚙️</div>
+      <span class="nav-label" id="navSetup">Sozlash</span>
+    </button>
+    <button class="nav-item" id="nav-profile" onclick="navigate('profile')">
+      <div class="nav-icon-wrap">👤</div>
+      <span class="nav-label" id="navProfile">Profil</span>
+    </button>
+    <button class="nav-item" id="nav-support" onclick="navigate('support')">
+      <div class="nav-icon-wrap">🎧</div>
+      <span class="nav-label" id="navSupport">Yordam</span>
+    </button>
+  </nav>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  let lang = 'uz';
+
+  // Botga signal yuborish (Telegram WebApp API orqali)
+  function sendToBot(data) {
+    if (window.Telegram && window.Telegram.WebApp) {
+      window.Telegram.WebApp.sendData(JSON.stringify(data));
+    } else {
+      // Test rejimi (Telegram tashqarisida ochilganda)
+      console.log("sendData:", data);
+      showToast("Test: " + JSON.stringify(data));
+    }
+  }
+
+  const strings = {
+    uz: {
+      setupStarted: "Sozlash boshlandi!",
+      otherDevice: "Boshqa qurilma uchun ko'rsatma!",
+      idCopied: "ID nusxalandi!",
+      linkCopied: "Havola nusxalandi!",
+      paymentMethods: "To'lov usullari",
+      history: "Tranzaksiyalar tarixi",
+      referral: "Referal dasturi",
+      access: "Kirishni saqlash",
+      support: "Qo'llab-quvvatlash",
+      terms: "Foydalanish shartlari",
+      connectingOp: "Operator bilan bog'lanish...",
+      faq: "Ko'p so'raladigan savollar",
+      buyMsg: (m, p) => `${m} oylik - ${p} ₽ to'lov amalga oshirilmoqda...`
+    },
+    ru: {
+      setupStarted: "Настройка начата!",
+      otherDevice: "Инструкция для другого устройства!",
+      idCopied: "ID скопирован!",
+      linkCopied: "Ссылка скопирована!",
+      paymentMethods: "Способы оплаты",
+      history: "История транзакций",
+      referral: "Реферальная программа",
+      access: "Сохранение доступа",
+      support: "Поддержка",
+      terms: "Условия использования",
+      connectingOp: "Подключение к оператору...",
+      faq: "Часто задаваемые вопросы",
+      buyMsg: (m, p) => `${m} мес. - оплата ${p} ₽ обрабатывается...`
+    }
+  };
+
+  function t(key, ...args) {
+    const s = strings[lang][key];
+    return typeof s === 'function' ? s(...args) : s;
+  }
+
+  const translations = {
+    uz: {
+      plansTitle: "Tarif rejalar",
+      btnSetup: "🔧 O'rnatish va sozlash",
+      setupHeaderSub: "mini-ilova",
+      setupTitle: "iOS da sozlash",
+      setupSub: "VPN sozlash 3 qadamda amalga oshiriladi va bir necha daqiqa vaqt oladi",
+      btnSetupThis: "Bu qurilmada sozlashni boshlash",
+      btnSetupOther: "Boshqa qurilmaga o'rnatish",
+      profileHeaderTitle: "Profil",
+      refLabel: "Sizning taklif havolangiz",
+      profileSection1: "Profil sozlamalari",
+      profileSection2: "Yordam",
+      pm1: "Mening obunam", pm1s: "Obuna holatini ko'rish",
+      pm2: "Operatsiyalar tarixi", pm2s: "Tranzaksiyalar ro'yxati",
+      pm3: "Referal dastur", pm3s: "Taklif uchun bonus oling",
+      pm4: "Kirishni saqlash", pm4s: "Telegram bloklansa ham ishlaydi",
+      sp1: "Boshqa qurilmaga o'rnatish", sp1s: "O'rnatish bo'yicha ko'rsatma",
+      sp2: "Qo'llab-quvvatlash", sp2s: "Onlayn muammolarni hal qilish",
+      sp3: "Foydalanuvchi shartnomasi", sp3s: "Xizmat qoidalari",
+      supportHeaderTitle: "Yordam",
+      supportTitle: "Yordam markazi",
+      supportSub: "Texnik muammolar va savollar uchun bizning jamoamiz doim tayyor",
+      btnOperator: "💬 Operatorga yozish",
+      btnFaq: "❓ Ko'p so'raladigan savollar",
+      navHome: "Bosh", navSetup: "Sozlash", navProfile: "Profil", navSupport: "Yordam",
+      setupChooseTitle: "Qurilmangizni tanlang", setupChooseSub: "Qaysi tizimda ishlaydi?",
+      step3Title: "2-qadam: Profilni ulang",
+      step3Sub: "Quyidagi tugmani bosing — ilova avtomatik ochiladi va akkauntingiz ulanadi",
+      btnOpenApp: "🚀 Ilovada ochish va ulash",
+      step3Hint: "Tugmani bossangiz WireGuard ilovasi ochiladi",
+      step4Title: "Muvaffaqiyatli ulandi!", step4Sub: "VPN faol. Xavfsiz internetdan bahramand bo'ling!",
+      btnGoHome: "🏠 Bosh sahifaga", backText: "Orqaga", configName: "VPN Profil — UzVPN"
+    },
+    ru: {
+      plansTitle: "Тарифные планы",
+      btnSetup: "🔧 Установка и настройка",
+      setupHeaderSub: "мини-приложение",
+      setupTitle: "Настройка на iOS",
+      setupSub: "Настройка VPN происходит в 3 шага и занимает пару минут",
+      btnSetupThis: "Начать настройку на этом устройстве",
+      btnSetupOther: "Установить на другом устройстве",
+      profileHeaderTitle: "Профиль",
+      refLabel: "Ваша реферальная ссылка",
+      profileSection1: "Настройки профиля",
+      profileSection2: "Поддержка",
+      pm1: "Моя подписка", pm1s: "Посмотреть статус подписки",
+      pm2: "История операций", pm2s: "Список ваших транзакций",
+      pm3: "Реферальная программа", pm3s: "Получайте бонусы за приглашения",
+      pm4: "Сохранение доступа", pm4s: "На случай блокировки Telegram",
+      sp1: "Установка на другом устройстве", sp1s: "Подробная инструкция для установки",
+      sp2: "Связаться с поддержкой", sp2s: "Решение проблем онлайн",
+      sp3: "Пользовательское соглашение", sp3s: "Соглашения и правила сервиса",
+      supportHeaderTitle: "Поддержка",
+      supportTitle: "Центр поддержки",
+      supportSub: "Наша команда всегда готова помочь с техническими вопросами",
+      btnOperator: "💬 Написать оператору",
+      btnFaq: "❓ Часто задаваемые вопросы",
+      navHome: "Главная", navSetup: "Настройка", navProfile: "Профиль", navSupport: "Помощь",
+      setupChooseTitle: "Выберите устройство", setupChooseSub: "Какая операционная система?",
+      step3Title: "Шаг 2: Подключите профиль",
+      step3Sub: "Нажмите кнопку ниже — приложение откроется и аккаунт подключится автоматически",
+      btnOpenApp: "🚀 Открыть в приложении",
+      step3Hint: "При нажатии откроется приложение WireGuard",
+      step4Title: "Успешно подключено!", step4Sub: "VPN активен. Пользуйтесь безопасным интернетом!",
+      btnGoHome: "🏠 На главную", backText: "Назад", configName: "VPN Профиль — UzVPN"
+    }
+  };
+
+  function setLang(l) {
+    lang = l;
+    // Hide lang screen
+    document.getElementById('langScreen').classList.add('hidden');
+    // Pills
+    document.getElementById('pill-uz').classList.toggle('active', l === 'uz');
+    document.getElementById('pill-ru').classList.toggle('active', l === 'ru');
+    // Apply translations
+    const tr = translations[l];
+    Object.keys(tr).forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = tr[id];
+    });
+    // data attributes
+    document.querySelectorAll('[data-uz]').forEach(el => {
+      el.textContent = el.getAttribute('data-' + l);
+    });
+    // Setup dynamic
+    const isIOS = currentOS === 'ios';
+    if (tr.setupChooseTitle) {
+      const el = document.getElementById('setupChooseTitle');
+      if(el) el.textContent = tr.setupChooseTitle;
+    }
+    if (tr.setupChooseSub) {
+      const el = document.getElementById('setupChooseSub');
+      if(el) el.textContent = tr.setupChooseSub;
+    }
+    document.getElementById('iosSubText').textContent = l === 'uz' ? 'iOS uchun App Store' : 'App Store для iOS';
+    document.getElementById('androidSubText').textContent = l === 'uz' ? 'Android uchun Google Play' : 'Google Play для Android';
+  }
+
+  let currentOS = 'ios';
+
+  const storeLinks = {
+    ios: 'https://apps.apple.com/app/wireguard/id1451685025',
+    android: 'https://play.google.com/store/apps/details?id=com.wireguard.android'
+  };
+
+  function navigate(page) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('page-' + page).classList.add('active');
+    document.getElementById('nav-' + page).classList.add('active');
+    if (page === 'setup') showSetupStep(1);
+  }
+
+  function goTo(page) { navigate(page); }
+
+  function selectOS(os) {
+    currentOS = os;
+    const isIOS = os === 'ios';
+    // Update step 2 content
+    document.getElementById('step2Emoji').textContent = isIOS ? '🍎' : '🤖';
+    document.getElementById('step2Title').textContent = lang === 'uz'
+      ? (isIOS ? '1-qadam: App Store dan yuklab oling' : '1-qadam: Play Store dan yuklab oling')
+      : (isIOS ? 'Шаг 1: Скачайте из App Store' : 'Шаг 1: Скачайте из Play Store');
+    document.getElementById('step2Sub').textContent = lang === 'uz'
+      ? (isIOS ? 'WireGuard ilovasini App Store dan bepul yuklab oling' : 'WireGuard ilovasini Google Play dan bepul yuklab oling')
+      : (isIOS ? 'Скачайте WireGuard бесплатно из App Store' : 'Скачайте WireGuard бесплатно из Google Play');
+    document.getElementById('appStoreName').textContent = isIOS ? 'App Store • iPhone / iPad' : 'Google Play • Android';
+    document.getElementById('downloadBtnText').textContent = lang === 'uz' ? 'Yuklab olish' : 'Скачать';
+    document.getElementById('alreadyInstalled').textContent = lang === 'uz'
+      ? "Ilova o'rnatilgan, davom etish ›"
+      : 'Приложение установлено, продолжить ›';
+    showSetupStep(2);
+  }
+
+  function showSetupStep(step) {
+    [1,2,3,4].forEach(i => {
+      const el = document.getElementById('setupStep' + i);
+      if (el) el.style.display = (i === step) ? 'flex' : 'none';
+    });
+  }
+
+  function openStore() {
+    window.open(storeLinks[currentOS], '_blank');
+  }
+
+  function openVPNApp() {
+    showToast(lang === 'uz' ? 'WireGuard ilovasi ochilmoqda...' : 'Открытие WireGuard...');
+    setTimeout(() => showSetupStep(4), 1500);
+  }
+
+  function buyPlan(months, price) {
+    showToast(t('buyMsg', months, price));
+    sendToBot({action: 'buy_plan', plan_id: months});
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+</script>
+</body>
+</html>
