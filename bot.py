@@ -32,7 +32,7 @@ dp = Dispatcher(storage=MemoryStorage())
 TEXTS = {
     "uz": {
         "welcome": (
-            "👋 <b>UzVPN ga xush kelibsiz!</b>\n\n"
+            "👋 <b>PandaVPN ga xush kelibsiz!</b>\n\n"
             "🛡 Xavfsiz va tez internet uchun eng yaxshi tanlov.\n\n"
             "Quyidagi menyudan foydalaning:"
         ),
@@ -73,7 +73,7 @@ TEXTS = {
         "support_text": (
             "💬 <b>Qo'llab-quvvatlash</b>\n\n"
             "Muammolar yoki savollar bo'lsa:\n"
-            f"👉 {SUPPORT_USERNAME}"
+            f"👉 {https://t.me/Panda56_support}"
         ),
         "pay_success": (
             "✅ <b>To'lov qabul qilindi!</b>\n\n"
@@ -82,7 +82,7 @@ TEXTS = {
             "1. Happ ilovasini oching\n"
             "2. <b>+</b> tugmasini bosing\n"
             "3. Quyidagi linkni joylashtiring:\n\n"
-            f"<code>{HAPP_LINK}</code>"
+            f"<code>{https://g.ultm.in/s/E9GPTMr_hN2CfzVw }</code>"
         ),
         "install_hint": (
             "📱 <b>Ilovani yuklab oling:</b>\n\n"
@@ -93,7 +93,7 @@ TEXTS = {
     },
     "ru": {
         "welcome": (
-            "👋 <b>Добро пожаловать в UzVPN!</b>\n\n"
+            "👋 <b>Добро пожаловать в PandaVPN!</b>\n\n"
             "🛡 Лучший выбор для безопасного и быстрого интернета.\n\n"
             "Воспользуйтесь меню ниже:"
         ),
@@ -134,7 +134,7 @@ TEXTS = {
         "support_text": (
             "💬 <b>Поддержка</b>\n\n"
             "По вопросам и проблемам:\n"
-            f"👉 {SUPPORT_USERNAME}"
+            f"👉 {https://t.me/Panda56_support}"
         ),
         "pay_success": (
             "✅ <b>Оплата принята!</b>\n\n"
@@ -143,7 +143,7 @@ TEXTS = {
             "1. Откройте приложение Happ\n"
             "2. Нажмите <b>+</b>\n"
             "3. Вставьте ссылку:\n\n"
-            f"<code>{HAPP_LINK}</code>"
+            f"<code>{https://g.ultm.in/s/E9GPTMr_hN2CfzVw }</code>"
         ),
         "install_hint": (
             "📱 <b>Скачайте приложение:</b>\n\n"
